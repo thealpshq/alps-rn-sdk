@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import WebView, { WebViewMessageEvent } from 'react-native-webview'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { AlpsConfig } from '../config/AlpsConfig'
@@ -135,10 +135,14 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
             plain View here let the WebView (and the dark header card the real widget frame
             renders inside it) extend all the way to the physical top of the screen, under the
             status bar/notch/Dynamic Island entirely - covering system UI instead of sitting below
-            it like every reference example does. SafeAreaView insets the content to the device's
-            actual safe area on all sides, matching how the rest of this app's own screens already
-            do it (see alps-mobile's own SafeAreaView usage everywhere) - this was the one host
-            that didn't. */}
+            it like every reference example does. SafeAreaView alone didn't fix it: react-native's
+            Modal renders its children in a separate native view hierarchy, which a host app's own
+            top-level SafeAreaProvider doesn't reliably reach into - confirmed live, screenshotted
+            again, the Dynamic Island was still covered after switching to SafeAreaView alone.
+            Wrapping a SafeAreaProvider here too makes this self-contained: AlpsWidget now carries
+            its own correct insets regardless of whether/how a consuming app set one up outside its
+            own Modal boundary. */}
+        <SafeAreaProvider>
         <SafeAreaView style={styles.modalContainer}>
           <WebView<{}>
             ref={webViewRef}
@@ -173,6 +177,7 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
             <MaterialCommunityIcons name="close" size={24} color={DARK} />
           </Pressable>
         </SafeAreaView>
+        </SafeAreaProvider>
       </Modal>
     </View>
   )
