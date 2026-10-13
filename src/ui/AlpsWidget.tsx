@@ -116,7 +116,14 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
         </Pressable>
       )}
 
-      <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
+      {/* Real bug found live, screenshotted: "pageSheet" is iOS's card-style presentation - it
+          leaves a visible margin/gap around the sheet (and dims/peeks the screen behind it),
+          which is why the close button and a stray dev-menu icon appeared to float outside the
+          white card's edge instead of sitting cleanly inside a full native screen. "fullScreen"
+          covers the entire display edge-to-edge, matching how the Android SDK's native Activity
+          and the iOS SDK's full-bleed WKWebView already present it - this was the one host that
+          didn't match. */}
+      <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={handleClose}>
         <View style={styles.modalContainer}>
           <WebView<{}>
             ref={webViewRef}
