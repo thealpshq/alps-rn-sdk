@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import WebView, { WebViewMessageEvent } from 'react-native-webview'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { AlpsConfig } from '../config/AlpsConfig'
@@ -130,7 +131,15 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
           and the iOS SDK's full-bleed WKWebView already present it - this was the one host that
           didn't match. */}
       <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={handleClose}>
-        <View style={styles.modalContainer}>
+        {/* Real bug found live, screenshotted side by side against Kuda/Intercom's widget: a
+            plain View here let the WebView (and the dark header card the real widget frame
+            renders inside it) extend all the way to the physical top of the screen, under the
+            status bar/notch/Dynamic Island entirely - covering system UI instead of sitting below
+            it like every reference example does. SafeAreaView insets the content to the device's
+            actual safe area on all sides, matching how the rest of this app's own screens already
+            do it (see alps-mobile's own SafeAreaView usage everywhere) - this was the one host
+            that didn't. */}
+        <SafeAreaView style={styles.modalContainer}>
           <WebView<{}>
             ref={webViewRef}
             source={{ uri: embedUrl }}
@@ -163,7 +172,7 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
           <Pressable style={styles.closeButton} onPress={handleClose}>
             <MaterialCommunityIcons name="close" size={24} color={DARK} />
           </Pressable>
-        </View>
+        </SafeAreaView>
       </Modal>
     </View>
   )
