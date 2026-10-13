@@ -174,7 +174,7 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
           )}
 
           <Pressable style={styles.closeButton} onPress={handleClose}>
-            <MaterialCommunityIcons name="close" size={24} color={DARK} />
+            <MaterialCommunityIcons name="close" size={20} color="#FFFFFF" />
           </Pressable>
         </SafeAreaView>
         </SafeAreaProvider>
@@ -250,12 +250,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  // Real gap found live (user feedback, screenshotted): this had no background at all - just a
+  // dark icon, which blends into the widget's own dark header and is easy to lose track of/
+  // confuse with anything else floating nearby (like the Expo dev client's own menu bubble, which
+  // happens to sit in roughly the same corner during local testing, in a build like this but not
+  // in a real production one). Kuda/Intercom's reference both put their close button in a solid,
+  // clearly-separated circle - matching that here: a dark semi-transparent circle with a white
+  // icon reads clearly against either the panel's own dark header or whatever's behind it.
   closeButton: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 40,
-    height: 40,
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
