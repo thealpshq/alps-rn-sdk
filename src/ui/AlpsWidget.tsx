@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import WebView, { WebViewMessageEvent } from 'react-native-webview'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { AlpsConfig } from '../config/AlpsConfig'
@@ -37,6 +37,24 @@ function buildEmbedUrl(config: AlpsConfig): string {
   if (config.visitorName) params.set('userName', config.visitorName)
   if (config.visitorEmail) params.set('userEmail', config.visitorEmail)
   return `${FRAME_URL}?${params.toString()}`
+}
+
+// Real bug found live, screenshotted repeatedly on both iOS and Android: SafeAreaView's padding
+// only protects children in normal document flow - position:'absolute' children (like this close
+// button, which has to float over the WebView rather than push it down) are measured from the
+// parent's padding EDGE, bypassing that padding entirely. That's why the WebView content
+// correctly sits below the notch/status bar while this one element kept touching it regardless -
+// not a measurement bug, a fundamentally different CSS/RN behavior for absolute positioning.
+// Needs its own small component so useSafeAreaInsets() - which only works for a descendant of a
+// SafeAreaProvider - can read the real value; AlpsWidget's own SafeAreaProvider is rendered
+// inside its JSX, not above it, so calling the hook directly in AlpsWidget's body wouldn't see it.
+const CloseButton = ({ onPress }: { onPress: () => void }) => {
+  const insets = useSafeAreaInsets()
+  return (
+    <Pressable style={[styles.closeButton, { top: insets.top + 16 }]} onPress={onPress}>
+      <MaterialCommunityIcons name="close" size={20} color="#FFFFFF" />
+    </Pressable>
+  )
 }
 
 export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
@@ -173,9 +191,7 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
             </View>
           )}
 
-          <Pressable style={styles.closeButton} onPress={handleClose}>
-            <MaterialCommunityIcons name="close" size={20} color="#FFFFFF" />
-          </Pressable>
+          <CloseButton onPress={handleClose} />
         </SafeAreaView>
         </SafeAreaProvider>
       </Modal>
@@ -259,7 +275,8 @@ const styles = StyleSheet.create({
   // icon reads clearly against either the panel's own dark header or whatever's behind it.
   closeButton: {
     position: 'absolute',
-    top: 16,
+    // top is set dynamically in the CloseButton component above (insets.top + 16) - a static
+    // value here would be the exact bug being fixed, so deliberately omitted, not forgotten.
     right: 16,
     width: 32,
     height: 32,
