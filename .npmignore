@@ -1,0 +1,17 @@
+node_modules
+.expo
+.git
+.github
+.DS_Store
+*.log
+dist
+coverage
+.env
+.env.local
+*.test.ts
+*.test.tsx
+App.tsx
+app.json
+eas.json
+examples/
+.expo-shared/

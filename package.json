@@ -1,0 +1,59 @@
+{
+  "name": "alps-rn-sdk",
+  "version": "0.1.0",
+  "description": "Alps customer support widget SDK for React Native (iOS & Android)",
+  "author": "Alps",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thealpshq/alps-rn-sdk"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "alps",
+    "customer-support",
+    "widget",
+    "react-native",
+    "ios",
+    "android",
+    "chat",
+    "messaging"
+  ],
+  "scripts": {
+    "start": "expo start",
+    "build": "tsc --declaration",
+    "build:ios": "eas build --platform ios",
+    "build:android": "eas build --platform android",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-native": "^0.68.0",
+    "react-native-webview": ">=13.0.0"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.0.0"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "react-native": "^0.73.0",
+    "expo": "^51.0.0",
+    "react-native-webview": "^13.0.0",
+    "typescript": "^5.3.0",
+    "@types/react": "~18.2.0",
+    "@types/react-native": "^0.73.0"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
