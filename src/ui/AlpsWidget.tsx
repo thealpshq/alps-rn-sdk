@@ -45,7 +45,13 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
 }) => {
   const [visible, setVisible] = useState(externalVisible ?? false)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  // Real gap found live: this was a plain boolean, so the real failure reason main.js's boot()
+  // sends via sendToHost(MSG.ERROR, {message: String(e?.message || e)}) was received and then
+  // immediately thrown away - only ever showing a generic "check your connection" message
+  // regardless of what actually failed (bad JSON, a non-200, a network error, anything). Carrying
+  // the real string here is what actually makes this error screen useful for diagnosing why,
+  // instead of a dead end every time.
+  const [error, setError] = useState<string | null>(null)
   // Real bug found live (tsc, not guessed): `WebView<P = undefined>` - its default generic
   // parameter - makes `WebViewProps & P` collapse to `never` in react-native-webview@13.17.0's
   // own type declarations when no type argument is given, breaking every prop. `<{}>` here and
@@ -63,7 +69,7 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
   useEffect(() => {
     if (visible) {
       setLoading(true)
-      setError(false)
+      setError(null)
     }
   }, [visible])
 
@@ -92,7 +98,7 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
           // CLOSE message exists in the protocol; this is the real signal to listen for.
           handleClose()
         } else if (envelope.type === 'ERROR') {
-          setError(true)
+          setError(typeof envelope.payload?.message === 'string' ? envelope.payload.message : 'Unknown error')
         }
       } catch {
         // Malformed/unexpected message - ignore rather than crash the host app.
@@ -102,7 +108,7 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
   )
 
   const retry = useCallback(() => {
-    setError(false)
+    setError(null)
     setLoading(true)
     webViewRef.current?.reload()
   }, [])
@@ -130,8 +136,8 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
             source={{ uri: embedUrl }}
             style={styles.webview}
             onMessage={handleMessage}
-            onError={() => setError(true)}
-            onHttpError={() => setError(true)}
+            onError={(e) => setError(e.nativeEvent.description || 'WebView failed to load')}
+            onHttpError={(e) => setError(`HTTP ${e.nativeEvent.statusCode} loading the widget`)}
             onLoadEnd={() => setLoading(false)}
             javaScriptEnabled
             domStorageEnabled
@@ -146,7 +152,8 @@ export const AlpsWidget: React.FC<AlpsWidgetProps> = ({
           )}
           {error && (
             <View style={styles.overlay}>
-              <Text style={styles.errorText}>Couldn't load chat. Check your connection and try again.</Text>
+              <Text style={styles.errorText}>Couldn't load chat.</Text>
+              <Text style={styles.errorDetailText}>{error}</Text>
               <Pressable style={styles.retryButton} onPress={retry}>
                 <Text style={styles.retryButtonText}>Retry</Text>
               </Pressable>
@@ -209,6 +216,12 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 15,
     color: '#3F3F46',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  errorDetailText: {
+    fontSize: 13,
+    color: '#71717A',
     textAlign: 'center',
     marginBottom: 16,
   },
